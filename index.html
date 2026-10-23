@@ -133,9 +133,9 @@
 <body>
 <div class="container">
   <div class="header">
-    <h1>⚡BCP Compiler Jangan Lupa Ibadah ⚠️ </h1>
-    <p>Sekedar Compiler biasa saja</p>
-    <p><style="margin-top:8px;font-size:12px;opacity:.85">🔁 Dibuat untuk senda gurau semata </p>
+    <h1>⚡ BCP Compiler</h1>
+    <p>Kompilasi <b>POT Analysis Report</b> + <b>Segmentation Info</b> → Sheet <code>bcp_segmentation_export_sheet</code> & <code>bcp_diagram_export_sheet</code></p>
+    <p style="margin-top:8px;font-size:12px;opacity:.85">🔁 Duplikat dipertahankan · 1 baris Site Down List = 1 baris output (tanpa pengurangan)</p>
   </div>
 
   <div class="cdn-warn" id="cdn-warn">
@@ -144,7 +144,11 @@
 
   <div class="upload-grid">
     <div class="upload-card pot">
-      <h2>🔴 File 1 — POT Analysis Report <span class="badge purple">File Analysis Report</span></h2>
+      <h2>🔴 File 1 — POT Analysis Report <span class="badge purple">SUMBER UTAMA</span></h2>
+      <div class="desc">
+        Berisi <b>Summary Report</b> (→ bcp_diagram), <b>Site Down List</b> (sumber baris & kolom <code>Key</code>, <code>First Occurred</code>, <code>Alarm</code>, <code>BTS Name</code>, <code>Hub Type</code>, <code>Power Alarm*</code>), dan detail alarm.
+        <br><small>✅ Semua baris Site Down List dijamin 1:1 ke output, termasuk duplikat.</small>
+      </div>
       <label class="drop-zone" id="dz-pot">
         <input type="file" id="file-pot" accept=".xlsx,.xls,.csv">
         <div class="icon">📕</div>
@@ -159,7 +163,10 @@
     </div>
 
     <div class="upload-card seg">
-      <h2>🔵 File 2 — Segmentation Info <span class="badge blue">Segement info export OWS</span></h2>
+      <h2>🔵 File 2 — Segmentation Info <span class="badge blue">ENRICH</span></h2>
+      <div class="desc">
+        Melengkapi kolom lain (Old Site Id, System, Tech, IP OAM, Region, City, Area, Province, VIP, dll) berdasarkan <code>Site Id</code> dari Site Down List.
+      </div>
       <label class="drop-zone" id="dz-seg">
         <input type="file" id="file-seg" accept=".xlsx,.xls,.csv">
         <div class="icon">📘</div>
@@ -191,7 +198,7 @@
   </div>
 
   <div class="result-card" id="result-card">
-    <h2>✅Comparation Done kana kuch</h2>
+    <h2>✅ Kompilasi Selesai</h2>
     <div class="result-stats">
       <div class="stat"><div class="num" id="stat-diag">0</div><div class="lbl">Baris · bcp_diagram</div></div>
       <div class="stat" id="stat-base-card"><div class="num" id="stat-base">0</div><div class="lbl">Baris · Site Down List (base)</div></div>
