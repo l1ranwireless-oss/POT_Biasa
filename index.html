@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BCP Compiler · POT</title>
+<title>BCP Compiler · POT + Segmentation</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
@@ -12,12 +12,15 @@
   .header{text-align:center;color:#fff;margin-bottom:32px}
   .header h1{font-size:32px;margin-bottom:8px}
   .header p{opacity:.9;font-size:14px}
-  .upload-grid{display:grid;grid-template-columns:minmax(0,760px);justify-content:center;gap:20px;margin-bottom:24px}
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+  @media(max-width:768px){.upload-grid{grid-template-columns:1fr}}
   .upload-card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.15);border-top:6px solid;transition:transform .2s}
   .upload-card:hover{transform:translateY(-2px)}
   .upload-card.pot{border-top-color:#e53e3e}
+  .upload-card.seg{border-top-color:#3182ce}
   .upload-card h2{font-size:18px;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .upload-card.pot h2{color:#c53030}
+  .upload-card.seg h2{color:#2b6cb0}
   .upload-card .desc{font-size:13px;color:#718096;margin-bottom:16px;line-height:1.5}
   .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin-left:4px}
   .badge.red{background:#fff5f5;color:#c53030}
@@ -26,6 +29,7 @@
   .drop-zone{border:2px dashed #cbd5e0;border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all .2s}
   .drop-zone:hover,.drop-zone.dragover{border-color:#667eea;background:#f7fafc}
   .upload-card.pot .drop-zone:hover,.upload-card.pot .drop-zone.dragover{border-color:#e53e3e;background:#fff5f5}
+  .upload-card.seg .drop-zone:hover,.upload-card.seg .drop-zone.dragover{border-color:#3182ce;background:#ebf8ff}
   .drop-zone input{display:none}
   .drop-zone .icon{font-size:36px;margin-bottom:8px}
   .drop-zone .label{font-size:14px;color:#4a5568;font-weight:500}
@@ -140,12 +144,12 @@
 
   <div class="upload-grid">
     <div class="upload-card pot">
-      <h2>🔴 POT Analysis Report <span class="badge purple">Sumber data utama</span></h2>
+      <h2>🔴 File 1 — POT Analysis Report <span class="badge purple">File Analysis Report</span></h2>
       <label class="drop-zone" id="dz-pot">
-        <input type="file" id="file-pot" accept=".xlsx,.xls">
+        <input type="file" id="file-pot" accept=".xlsx,.xls,.csv">
         <div class="icon">📕</div>
         <div class="label">Klik / seret file POT Analysis Report</div>
-        <div class="sub">Satu file · .xlsx · .xls · .csv</div>
+        <div class="sub">.xlsx · .xls · .csv</div>
       </label>
       <div class="file-info" id="info-pot">
         <span class="remove" onclick="clearFile('pot');event.preventDefault()">✕ Ganti</span>
@@ -154,6 +158,20 @@
       </div>
     </div>
 
+    <div class="upload-card seg">
+      <h2>🔵 File 2 — Segmentation Info <span class="badge blue">Segement info export OWS</span></h2>
+      <label class="drop-zone" id="dz-seg">
+        <input type="file" id="file-seg" accept=".xlsx,.xls,.csv">
+        <div class="icon">📘</div>
+        <div class="label">Klik / seret file Segmentation Info</div>
+        <div class="sub">.xlsx · .xls · .csv</div>
+      </label>
+      <div class="file-info" id="info-seg">
+        <span class="remove" onclick="clearFile('seg');event.preventDefault()">✕ Ganti</span>
+        <div class="name" id="name-seg"></div>
+        <div class="meta" id="meta-seg"></div>
+      </div>
+    </div>
   </div>
 
   <div class="action-bar">
@@ -164,7 +182,7 @@
     <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
     <div class="stages">
       <div class="stage" id="stage-pot"><div class="indicator">1</div><div class="text">Membaca POT Analysis Report</div><div class="detail" id="det-pot"></div></div>
-      <div class="stage" id="stage-seg"><div class="indicator">2</div><div class="text">Mendeteksi detail data di POT</div><div class="detail" id="det-seg"></div></div>
+      <div class="stage" id="stage-seg"><div class="indicator">2</div><div class="text">Membaca Segmentation Info</div><div class="detail" id="det-seg"></div></div>
       <div class="stage" id="stage-match"><div class="indicator">3</div><div class="text">Menentukan base (Site Down List) & membangun lookup</div><div class="detail" id="det-match"></div></div>
       <div class="stage" id="stage-build"><div class="indicator">4</div><div class="text">Membangun sheet bcp_segmentation_export_sheet</div><div class="detail" id="det-build"></div></div>
       <div class="stage" id="stage-summary"><div class="indicator">5</div><div class="text">Menyalin Summary Report → bcp_diagram_export_sheet</div><div class="detail" id="det-summary"></div></div>
@@ -191,14 +209,14 @@
     <div class="integrity-note" id="integrity-note">🛡️ <b>Data integrity:</b> memverifikasi jumlah baris...</div>
     <div class="dup-note" id="dup-note">🔁 <b>Duplikat:</b> menghitung...</div>
     <div class="flow-note" id="flow-note">
-      🧭 <b>Alur:</b> setiap baris <code>Site Down List</code> → 1 baris output · kolom tertentu diambil langsung dari Site Down List · kolom lain diperkaya dari detail POT.
+      🧭 <b>Alur:</b> setiap baris <code>Site Down List</code> → 1 baris output · kolom tertentu diambil langsung dari Site Down List · kolom lain diperkaya dari Segmentation Info & POT detail.
     </div>
     <div class="key-note" id="key-note">🔑 <b>Key:</b> sedang menentukan sumber...</div>
     <div class="alias-note">
       🔗 <b>Cross-map & alias aktif:</b><br>
       🔀 <code>First Occurred(NT)</code> ← <code>Last Occurred(NT)</code> di <b>Site Down List</b><br>
       🟢 <code>Key</code>, <code>Alarm</code>, <code>Site Id</code>, <code>BTS Name</code>, <code>Hub Type</code>, <code>Power Alarm Name</code>, <code>Power Alarm Time</code> ← hanya dari <b>Site Down List</b><br>
-      🔴 Kolom lain (Old Site Id, System, Tech, IP OAM, Last Occurred(NT), Alarm Identifier, TT, WO, Mains Failure, dll) ← dari <b>detail POT</b><br>
+      🔵 Kolom lain (Old Site Id, System, Tech, IP OAM, Last Occurred(NT), Alarm Identifier, TT, WO, Mains Failure, dll) ← dari Segmentation Info & POT detail<br>
       📝 Alias: <code>Site Id</code> ↔ <code>Site ID</code>
     </div>
 
@@ -258,7 +276,7 @@ const COL_ALIASES = {
 /* ============================================================
    STATE
 ============================================================ */
-let potFile = null;
+let potFile = null, segFile = null;
 let lastOutputBlob = null, lastDiagRows = null, lastSegRows = null;
 let processing = false;
 const logLines = [];
@@ -449,9 +467,9 @@ function bindDrop(zoneId, inputId, key) {
 }
 
 function setFile(key, file) {
-  const okExt = /\.(xlsx|xls)$/i.test(file.name);
-  if (!okExt) { toast('Pilih workbook POT berformat .xlsx atau .xls', 'error'); return; }
-  potFile = file;
+  const okExt = /\.(xlsx|xls|csv)$/i.test(file.name);
+  if (!okExt) { toast('Format file harus .xlsx / .xls / .csv', 'error'); return; }
+  if (key === 'pot') potFile = file; else segFile = file;
   document.getElementById('info-' + key).classList.add('show');
   document.getElementById('name-' + key).textContent = file.name;
   document.getElementById('meta-' + key).textContent = fmtBytes(file.size) + ' · ' + new Date().toLocaleTimeString('id-ID');
@@ -460,15 +478,15 @@ function setFile(key, file) {
 }
 
 function clearFile(key) {
-  potFile = null;
-  document.getElementById('file-pot').value = '';
+  if (key === 'pot') { potFile = null; document.getElementById('file-pot').value = ''; }
+  else { segFile = null; document.getElementById('file-seg').value = ''; }
   document.getElementById('info-' + key).classList.remove('show');
   log(`File ${key.toUpperCase()} di-clear`);
   checkReady();
 }
 
 function checkReady() {
-  document.getElementById('btn-process').disabled = !potFile || processing;
+  document.getElementById('btn-process').disabled = !(potFile && segFile) || processing;
 }
 
 /* ============================================================
@@ -515,7 +533,7 @@ function failStage(id, msg) {
    MAIN PROCESS
 ============================================================ */
 async function process() {
-  if (processing || !potFile) return;
+  if (processing || !potFile || !segFile) return;
   processing = true;
   logLines.length = 0;
   log('=== Mulai proses kompilasi ===');
@@ -552,11 +570,19 @@ async function process() {
     doneStage('stage-pot', summaryRows.length + ' baris · sheet "' + summarySheetName + '"');
     await sleep(250);
 
-    /* ---- 2. Detect POT detail ---- */
+    /* ---- 2. Read Segmentation ---- */
     startStage('stage-seg');
     await sleep(350);
-    log('Seluruh sumber data berasal dari workbook POT: ' + potFile.name);
-    doneStage('stage-seg', potWb.SheetNames.length + ' sheet di workbook POT');
+    log('Membaca file Segmentation: ' + segFile.name);
+    const segBuf = await segFile.arrayBuffer();
+    const segWb = XLSX.read(segBuf, { type: 'array', cellDates: true });
+    log('Sheet di Segmentation: ' + segWb.SheetNames.join(', '));
+
+    const segSheetName = findSheet(segWb, ['segmentation', 'segment info', 'segment_info', 'site']) || segWb.SheetNames[0];
+    const segRowsRaw = sheetToAOA(segWb, segSheetName);
+    log('Segmentation sheet "' + segSheetName + '": ' + segRowsRaw.length + ' baris');
+
+    doneStage('stage-seg', segRowsRaw.length + ' baris · sheet "' + segSheetName + '"');
     await sleep(250);
 
     /* ---- 3. Base = Site Down List + Build Lookup ---- */
@@ -668,10 +694,30 @@ async function process() {
     }
     log('POT detail: ' + (potDetailName ? 'sheet "' + potDetailName + '"' : 'TIDAK ADA'));
 
-    // 3e. Data POT detail
+    // 3e. Data Segmentation & POT detail
+    const segHeaderIdx = findHeaderRowByColumns(segRowsRaw, [
+      h => norm(h).includes('site') && norm(h).includes('id')
+    ], 15);
+    const segHeaderRowIdx = segHeaderIdx >= 0 ? segHeaderIdx : 0;
+    const segHeader = segRowsRaw[segHeaderRowIdx] || [];
+    const segData = segRowsRaw.slice(segHeaderRowIdx + 1).filter(r => r.some(c => c !== '' && c != null));
     const potHeader = potDetailRows ? potDetailRows[0] : [];
     const potData = potDetailRows ? potDetailRows.slice(1).filter(r => r.some(c => c !== '' && c != null)) : [];
-    // 3f. Lookup detail POT (semua baris per site)
+
+    // 3f. Lookup segLookup (first-match)
+    const segSiteCol = autoMatch('Site Id', segHeader) || segHeader.find(h => norm(h).includes('siteid'));
+    const segLookup = {};
+    if (segSiteCol) {
+      const idx = segHeader.indexOf(segSiteCol);
+      for (const r of segData) {
+        const sid = String(r[idx] ?? '').trim();
+        if (!sid) continue;
+        if (!(sid in segLookup)) segLookup[sid] = r;
+      }
+      log('Seg lookup: ' + Object.keys(segLookup).length + ' site unik');
+    }
+
+    // 3g. Lookup potLookup (semua baris per site)
     const potSiteCol = autoMatch('Site Id', potHeader) || potHeader.find(h => norm(h).includes('siteid'));
     const potLookup = {};
     if (potSiteCol) {
@@ -684,8 +730,8 @@ async function process() {
       log('POT detail lookup: ' + Object.keys(potLookup).length + ' site unik');
     }
 
-    // 3g. Build mapping
-    const potMap = {};
+    // 3h. Build mapping
+    const segMap = {}, potMap = {};
     mappingRows = [];
     for (const tc of SEG_COLS) {
       if (SDL_SOURCE_MAP[tc] !== undefined) {
@@ -703,8 +749,16 @@ async function process() {
         }
         continue;
       }
+      const fromSeg = autoMatch(tc, segHeader);
       const fromPot = autoMatch(tc, potHeader);
-      if (fromPot) {
+      const isAlarm = /first|last|occurred|alarm|tt|wo/i.test(tc);
+      if (isAlarm && fromPot) {
+        potMap[tc] = fromPot;
+        mappingRows.push({ template: tc, source: 'POT Detail', matched: fromPot, ok: true, cls: 'tr-pot' });
+      } else if (fromSeg) {
+        segMap[tc] = fromSeg;
+        mappingRows.push({ template: tc, source: 'Segmentation Info', matched: fromSeg, ok: true, cls: 'tr-seg' });
+      } else if (fromPot) {
         potMap[tc] = fromPot;
         mappingRows.push({ template: tc, source: 'POT Detail', matched: fromPot, ok: true, cls: 'tr-pot' });
       } else {
@@ -726,7 +780,7 @@ async function process() {
     await sleep(350);
 
     const segOutRows = [SEG_COLS.slice()];
-    let potHitCount = 0, keyFilledCount = 0;
+    let segHitCount = 0, potHitCount = 0, keyFilledCount = 0;
 
     for (let i = 0; i < sdlData.length; i++) {
       // Yield ke UI setiap 500 baris (progress)
@@ -738,6 +792,8 @@ async function process() {
       const sdlRow = sdlData[i];
       const sid = String(sdlRow[sdlSiteIdx] ?? '').trim();
 
+      const segRow = sid ? (segLookup[sid] || null) : null;
+      if (segRow) segHitCount++;
       const potMatches = sid ? (potLookup[sid] || []) : [];
       if (potMatches.length) potHitCount++;
 
@@ -758,7 +814,11 @@ async function process() {
             }
           }
         }
-        // Priority 2: POT detail dengan agregasi
+        // Priority 2: Segmentation Info
+        else if (segMap[tc] !== undefined && segRow) {
+          val = segRow[segHeader.indexOf(segMap[tc])] ?? '';
+        }
+        // Priority 3: POT detail dengan agregasi
         else if (potMap[tc] !== undefined && potMatches.length) {
           const pi = potHeader.indexOf(potMap[tc]);
           if (/first.*occurred/i.test(tc)) {
@@ -787,14 +847,14 @@ async function process() {
     }
 
     const outputRowCount = segOutRows.length - 1;
-    const enrichRate = sdlData.length ? Math.round((potHitCount / sdlData.length) * 100) : 0;
+    const enrichRate = sdlData.length ? Math.round((segHitCount / sdlData.length) * 100) : 0;
 
     let buildDetail = outputRowCount + ' baris output';
     if (dupGroups > 0) buildDetail += ' (termasuk ' + dupRowsTotal + ' duplikat)';
     buildDetail += ' · Key: ' + keyFilledCount;
-    buildDetail += ' · POT detail: ' + potHitCount + '/' + sdlData.length;
+    buildDetail += ' · Seg: ' + segHitCount + '/' + sdlData.length;
     doneStage('stage-build', buildDetail);
-    log('Output bcp_segmentation: ' + outputRowCount + ' baris · Key: ' + keyFilledCount + ' · POT detail match: ' + potHitCount);
+    log('Output bcp_segmentation: ' + outputRowCount + ' baris · Key: ' + keyFilledCount + ' · Seg match: ' + segHitCount + ' · POT: ' + potHitCount);
     await sleep(250);
 
     /* ---- 5. Summary Report → bcp_diagram ---- */
@@ -873,7 +933,8 @@ async function process() {
 
     document.getElementById('flow-note').innerHTML =
       '🧭 <b>Alur:</b> ' + sdlData.length + ' baris dari <code>' + escapeHtml(siteDownListName) + '</code> → ' +
-      potHitCount + ' site diperkaya dari detail POT (' + enrichRate + '%). Semua data bersumber dari satu workbook POT.';
+      segHitCount + ' site diperkaya dari Segmentation (' + enrichRate + '%) · ' +
+      potHitCount + ' site punya detail POT.';
 
     let keyNoteHtml = '🔑 <b>Key:</b> kolom <code>' + escapeHtml(sdlKeyCol) + '</code> dari <code>' + escapeHtml(siteDownListName) + '</code> · ' +
       keyFilledCount + '/' + sdlData.length + ' baris terisi';
@@ -980,10 +1041,12 @@ function downloadLog() {
 }
 
 function resetAll() {
-  potFile = null;
+  potFile = null; segFile = null;
   lastOutputBlob = null; lastDiagRows = null; lastSegRows = null;
   document.getElementById('file-pot').value = '';
+  document.getElementById('file-seg').value = '';
   document.getElementById('info-pot').classList.remove('show');
+  document.getElementById('info-seg').classList.remove('show');
   document.getElementById('progress-card').classList.remove('show');
   document.getElementById('result-card').classList.remove('show');
   document.getElementById('mapping-body').innerHTML = '';
@@ -997,6 +1060,7 @@ function resetAll() {
    INIT
 ============================================================ */
 bindDrop('dz-pot', 'file-pot', 'pot');
+bindDrop('dz-seg', 'file-seg', 'seg');
 log('Aplikasi siap. Menunggu upload file...');
 </script>
 </body>
