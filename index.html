@@ -109,6 +109,8 @@
   .integrity-note.warn code{color:#975a16}
   .dup-note{background:#faf5ff;border:1px solid #d6bcfa;color:#553c9a;padding:12px 16px;border-radius:10px;font-size:12px;margin-top:12px;line-height:1.8}
   .dup-note code{background:#fff;padding:1px 6px;border-radius:4px;color:#6b46c1}
+  .fixed-note{background:#f0fff4;border:1px solid #9ae6b4;color:#22543d;padding:12px 16px;border-radius:10px;font-size:12px;margin-top:12px;line-height:1.8}
+  .fixed-note code{background:#fff;padding:1px 6px;border-radius:4px;color:#276749}
   details.panel{background:#f7fafc;border:1px solid #e2e8f0;border-radius:10px;margin-top:12px;padding:0;overflow:hidden}
   details.panel summary{padding:12px 16px;cursor:pointer;font-size:13px;font-weight:600;color:#2d3748;user-select:none;transition:background .15s}
   details.panel summary:hover{background:#edf2f7}
@@ -125,6 +127,7 @@
   .mapping-table .tr-pot{background:#fffaf0}
   .mapping-table .tr-sdl{background:#f0fff4}
   .mapping-table .tr-cross{background:#faf5ff}
+  .mapping-table .tr-fixed{background:#c6f6d5;font-weight:600}
   .btn-small{padding:6px 14px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:#3182ce;color:#fff;font-family:inherit}
   .btn-small:hover{background:#2b6cb0}
   .cdn-warn{background:#fff5f5;border:1px solid #fed7d7;color:#c53030;padding:12px 16px;border-radius:10px;font-size:13px;margin-top:16px;display:none}
@@ -185,7 +188,7 @@
       <div class="stage" id="stage-pot"><div class="indicator">1</div><div class="text">Membaca POT Analysis Report (data utama)</div><div class="detail" id="det-pot"></div></div>
       <div class="stage" id="stage-seg"><div class="indicator">2</div><div class="text">Membaca Segmentation Info (pelengkap)</div><div class="detail" id="det-seg"></div></div>
       <div class="stage" id="stage-match"><div class="indicator">3</div><div class="text">Menentukan base (Site Down List) & membangun lookup POT + Seg</div><div class="detail" id="det-match"></div></div>
-      <div class="stage" id="stage-build"><div class="indicator">4</div><div class="text">Membangun sheet bcp_segmentation_export_sheet (POT utama, Seg fallback)</div><div class="detail" id="det-build"></div></div>
+      <div class="stage" id="stage-build"><div class="indicator">4</div><div class="text">Membangun sheet bcp_segmentation_export_sheet (POT utama, Seg fallback, Fixed auto)</div><div class="detail" id="det-build"></div></div>
       <div class="stage" id="stage-summary"><div class="indicator">5</div><div class="text">Menyalin Summary Report → bcp_diagram_export_sheet</div><div class="detail" id="det-summary"></div></div>
       <div class="stage" id="stage-excel"><div class="indicator">6</div><div class="text">Menyusun file Excel output</div><div class="detail" id="det-excel"></div></div>
     </div>
@@ -212,6 +215,9 @@
     <div class="flow-note" id="flow-note">
       🧭 <b>Alur:</b> setiap baris <code>Site Down List</code> (dari POT) → 1 baris output · kolom 8 terpilih strict dari Site Down List · kolom lain <b>diutamakan dari POT Detail</b>, lalu Segmentation hanya mengisi gap.
     </div>
+    <div class="fixed-note" id="fixed-note">
+      📌 <b>Kolom auto-fixed:</b> <code>Impact Category</code> selalu diisi <code>"Fully Site Down"</code> untuk setiap baris (override semua sumber).
+    </div>
     <div class="key-note" id="key-note">🔑 <b>Key:</b> sedang menentukan sumber...</div>
     <div class="alias-note">
       🔗 <b>Prioritas sumber data:</b><br>
@@ -219,6 +225,7 @@
       🥈 <b>Segmentation Info = PELENGKAP</b> — hanya mengisi kolom yang <b>tidak ada di POT</b> atau <b>selnya kosong di POT</b><br>
       🔀 <code>First Occurred(NT)</code> ← <code>Last Occurred(NT)</code> di <b>Site Down List</b> (cross-map)<br>
       🟢 <code>Key</code>, <code>Alarm</code>, <code>Site Id</code>, <code>BTS Name</code>, <code>Hub Type</code>, <code>Power Alarm Name</code>, <code>Power Alarm Time</code> ← strict dari <b>Site Down List</b> (no fallback)<br>
+      📌 <code>Impact Category</code> ← <b>auto-fixed</b> = <code>"Fully Site Down"</code> (override semua sumber)<br>
       🟠 Kolom lain (Old Site Id, System, Tech, IP OAM, Last Occurred(NT), Alarm Identifier, TT, WO, Mains Failure, dll) ← <b>POT Detail dulu</b>, baru Segmentation jika POT kosong<br>
       📝 Alias: <code>Site Id</code> ↔ <code>Site ID</code>
     </div>
@@ -266,6 +273,11 @@ const SDL_SOURCE_MAP = {
   'Hub Type':           'Hub Type',
   'Power Alarm Name':   'Power Alarm Name',
   'Power Alarm Time':   'Power Alarm Time',
+};
+
+/* KOLOM AUTO-FIXED (HARDCODED) — override semua sumber */
+const FIXED_COLS = {
+  'Impact Category': 'Fully Site Down',
 };
 
 const COL_ALIASES = {
@@ -733,10 +745,24 @@ async function process() {
       log('POT detail lookup (utama): ' + Object.keys(potLookup).length + ' site unik');
     }
 
-    // 3h. Build mapping - POT = UTAMA, Seg = PELENGKAP
+    // 3h. Build mapping - FIXED > SDL > POT Detail > Segmentation
     const segMap = {}, potMap = {};
     mappingRows = [];
     for (const tc of SEG_COLS) {
+      // Priority 0: FIXED_COLS (hardcoded, override semua)
+      if (FIXED_COLS[tc] !== undefined) {
+        mappingRows.push({
+          template: tc,
+          source: 'Fixed (otomatis)',
+          matched: '"' + FIXED_COLS[tc] + '"',
+          ok: true,
+          cls: 'tr-fixed',
+          fallback: '—'
+        });
+        log('  Fixed: "' + tc + '" = "' + FIXED_COLS[tc] + '" (override semua sumber)');
+        continue;
+      }
+
       // Priority 1: SDL_SOURCE_MAP (strict)
       if (SDL_SOURCE_MAP[tc] !== undefined) {
         if (sdlMap[tc] !== undefined) {
@@ -814,7 +840,7 @@ async function process() {
 
     const segOutRows = [SEG_COLS.slice()];
     let segHitCount = 0, potHitCount = 0, keyFilledCount = 0;
-    let potPrimaryCells = 0, segFallbackCells = 0;
+    let potPrimaryCells = 0, segFallbackCells = 0, fixedCells = 0;
 
     for (let i = 0; i < sdlData.length; i++) {
       // Yield ke UI setiap 500 baris (progress)
@@ -834,6 +860,13 @@ async function process() {
       const out = [];
       for (const tc of SEG_COLS) {
         let val = '';
+
+        // ===== PRIORITY 0: FIXED_COLS (hardcoded, override semua) =====
+        if (FIXED_COLS[tc] !== undefined) {
+          out.push(FIXED_COLS[tc]);
+          fixedCells++;
+          continue;
+        }
 
         // ===== PRIORITY 1: SDL (STRICT, tanpa fallback) =====
         if (SDL_SOURCE_MAP[tc] !== undefined) {
@@ -903,12 +936,14 @@ async function process() {
     let buildDetail = outputRowCount + ' baris output';
     if (dupGroups > 0) buildDetail += ' (termasuk ' + dupRowsTotal + ' duplikat)';
     buildDetail += ' · POT: ' + potHitCount + '/' + sdlData.length;
+    buildDetail += ' · Fixed: ' + fixedCells + ' sel';
     buildDetail += ' · Seg fill: ' + segFallbackCells + ' sel';
     doneStage('stage-build', buildDetail);
     log('Output bcp_segmentation: ' + outputRowCount + ' baris');
     log('  - POT Detail coverage: ' + potHitCount + '/' + sdlData.length + ' (' + potCoverage + '%)');
     log('  - Sel diisi dari POT Detail: ' + potPrimaryCells);
     log('  - Sel diisi dari Seg (fallback): ' + segFallbackCells);
+    log('  - Sel diisi dari FIXED (auto): ' + fixedCells + ' (Impact Category = "Fully Site Down")');
     log('  - Key terisi: ' + keyFilledCount);
     await sleep(250);
 
@@ -990,7 +1025,13 @@ async function process() {
       '🧭 <b>Alur (POT = utama, Seg = pelengkap):</b> ' + sdlData.length + ' baris dari <code>' + escapeHtml(siteDownListName) + '</code> (POT) → ' +
       potHitCount + ' site diperkaya dari POT Detail (' + potCoverage + '%) · ' +
       segHitCount + ' site punya data Segmentation (' + enrichRate + '%) · ' +
-      segFallbackCells + ' sel diisi dari Seg karena POT kosong/tidak ada.';
+      segFallbackCells + ' sel diisi dari Seg karena POT kosong/tidak ada · ' +
+      fixedCells + ' sel auto-fixed.';
+
+    // Update fixed-note dengan jumlah sel
+    document.getElementById('fixed-note').innerHTML =
+      '📌 <b>Kolom auto-fixed:</b> <code>Impact Category</code> selalu diisi <code>"Fully Site Down"</code> untuk setiap baris (override semua sumber) · ' +
+      fixedCells.toLocaleString('id-ID') + ' sel terisi otomatis.';
 
     let keyNoteHtml = '🔑 <b>Key:</b> kolom <code>' + escapeHtml(sdlKeyCol) + '</code> dari <code>' + escapeHtml(siteDownListName) + '</code> · ' +
       keyFilledCount + '/' + sdlData.length + ' baris terisi';
@@ -1006,7 +1047,7 @@ async function process() {
     document.getElementById('result-card').scrollIntoView({ behavior: 'smooth' });
 
     if (isIntegrityOk) {
-      toast('✅ Berhasil! ' + outputRowCount + ' baris = ' + sdlData.length + ' base (POT utama, Seg pelengkap).', 'success');
+      toast('✅ Berhasil! ' + outputRowCount + ' baris · Impact Category auto-filled "Fully Site Down".', 'success');
     } else {
       toast('⚠️ Selesai, ada selisih baris. Cek integrity note.', 'warn');
     }
@@ -1118,7 +1159,7 @@ function resetAll() {
 ============================================================ */
 bindDrop('dz-pot', 'file-pot', 'pot');
 bindDrop('dz-seg', 'file-seg', 'seg');
-log('Aplikasi siap. Menunggu upload file... (POT = data utama, Seg = pelengkap)');
+log('Aplikasi siap. Menunggu upload file... (POT = data utama, Seg = pelengkap, Impact Category auto-fixed)');
 </script>
 </body>
 </html>
