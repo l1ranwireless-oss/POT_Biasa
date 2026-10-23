@@ -26,6 +26,7 @@
   .badge.red{background:#fff5f5;color:#c53030}
   .badge.blue{background:#ebf8ff;color:#2b6cb0}
   .badge.purple{background:#faf5ff;color:#6b46c1}
+  .badge.gold{background:#fffaf0;color:#b7791f;border:1px solid #fbd38d}
   .drop-zone{border:2px dashed #cbd5e0;border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all .2s}
   .drop-zone:hover,.drop-zone.dragover{border-color:#667eea;background:#f7fafc}
   .upload-card.pot .drop-zone:hover,.upload-card.pot .drop-zone.dragover{border-color:#e53e3e;background:#fff5f5}
@@ -133,9 +134,9 @@
 <body>
 <div class="container">
   <div class="header">
-    <h1>⚡ BCP Compiler</h1>
-    <p>Kompilasi <b>POT Analysis Report</b> + <b>Segmentation Info</b> → Sheet <code>bcp_segmentation_export_sheet</code> & <code>bcp_diagram_export_sheet</code></p>
-    <p style="margin-top:8px;font-size:12px;opacity:.85">🔁 Duplikat dipertahankan · 1 baris Site Down List = 1 baris output (tanpa pengurangan)</p>
+    <h1>⚡BCP Compiler Jangan Lupa Ibadah ⚠️ </h1>
+    <p>Sekedar Compiler biasa saja</p>
+    <p><style="margin-top:8px;font-size:12px;opacity:.85">🔁 Dibuat untuk senda gurau semata </p>
   </div>
 
   <div class="cdn-warn" id="cdn-warn">
@@ -144,16 +145,12 @@
 
   <div class="upload-grid">
     <div class="upload-card pot">
-      <h2>🔴 File 1 — POT Analysis Report <span class="badge purple">SUMBER UTAMA</span></h2>
-      <div class="desc">
-        Berisi <b>Summary Report</b> (→ bcp_diagram), <b>Site Down List</b> (sumber baris & kolom <code>Key</code>, <code>First Occurred</code>, <code>Alarm</code>, <code>BTS Name</code>, <code>Hub Type</code>, <code>Power Alarm*</code>), dan detail alarm.
-        <br><small>✅ Semua baris Site Down List dijamin 1:1 ke output, termasuk duplikat.</small>
-      </div>
+      <h2>🔴 File 1 — POT Analysis Report <span class="badge gold">DATA UTAMA</span></h2>
       <label class="drop-zone" id="dz-pot">
         <input type="file" id="file-pot" accept=".xlsx,.xls,.csv">
         <div class="icon">📕</div>
         <div class="label">Klik / seret file POT Analysis Report</div>
-        <div class="sub">.xlsx · .xls · .csv</div>
+        <div class="sub">.xlsx · .xls · .csv · Sumber utama: Summary Report + Site Down List + Detail</div>
       </label>
       <div class="file-info" id="info-pot">
         <span class="remove" onclick="clearFile('pot');event.preventDefault()">✕ Ganti</span>
@@ -163,15 +160,12 @@
     </div>
 
     <div class="upload-card seg">
-      <h2>🔵 File 2 — Segmentation Info <span class="badge blue">ENRICH</span></h2>
-      <div class="desc">
-        Melengkapi kolom lain (Old Site Id, System, Tech, IP OAM, Region, City, Area, Province, VIP, dll) berdasarkan <code>Site Id</code> dari Site Down List.
-      </div>
+      <h2>🔵 File 2 — Segmentation Info <span class="badge blue">PELENGKAP</span></h2>
       <label class="drop-zone" id="dz-seg">
         <input type="file" id="file-seg" accept=".xlsx,.xls,.csv">
         <div class="icon">📘</div>
         <div class="label">Klik / seret file Segmentation Info</div>
-        <div class="sub">.xlsx · .xls · .csv</div>
+        <div class="sub">.xlsx · .xls · .csv · Hanya mengisi kolom yang tidak tersedia/kosong di POT</div>
       </label>
       <div class="file-info" id="info-seg">
         <span class="remove" onclick="clearFile('seg');event.preventDefault()">✕ Ganti</span>
@@ -188,20 +182,20 @@
   <div class="progress-card" id="progress-card">
     <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
     <div class="stages">
-      <div class="stage" id="stage-pot"><div class="indicator">1</div><div class="text">Membaca POT Analysis Report</div><div class="detail" id="det-pot"></div></div>
-      <div class="stage" id="stage-seg"><div class="indicator">2</div><div class="text">Membaca Segmentation Info</div><div class="detail" id="det-seg"></div></div>
-      <div class="stage" id="stage-match"><div class="indicator">3</div><div class="text">Menentukan base (Site Down List) & membangun lookup</div><div class="detail" id="det-match"></div></div>
-      <div class="stage" id="stage-build"><div class="indicator">4</div><div class="text">Membangun sheet bcp_segmentation_export_sheet</div><div class="detail" id="det-build"></div></div>
+      <div class="stage" id="stage-pot"><div class="indicator">1</div><div class="text">Membaca POT Analysis Report (data utama)</div><div class="detail" id="det-pot"></div></div>
+      <div class="stage" id="stage-seg"><div class="indicator">2</div><div class="text">Membaca Segmentation Info (pelengkap)</div><div class="detail" id="det-seg"></div></div>
+      <div class="stage" id="stage-match"><div class="indicator">3</div><div class="text">Menentukan base (Site Down List) & membangun lookup POT + Seg</div><div class="detail" id="det-match"></div></div>
+      <div class="stage" id="stage-build"><div class="indicator">4</div><div class="text">Membangun sheet bcp_segmentation_export_sheet (POT utama, Seg fallback)</div><div class="detail" id="det-build"></div></div>
       <div class="stage" id="stage-summary"><div class="indicator">5</div><div class="text">Menyalin Summary Report → bcp_diagram_export_sheet</div><div class="detail" id="det-summary"></div></div>
       <div class="stage" id="stage-excel"><div class="indicator">6</div><div class="text">Menyusun file Excel output</div><div class="detail" id="det-excel"></div></div>
     </div>
   </div>
 
   <div class="result-card" id="result-card">
-    <h2>✅ Kompilasi Selesai</h2>
+    <h2>✅Comparation Done kana kuch</h2>
     <div class="result-stats">
       <div class="stat"><div class="num" id="stat-diag">0</div><div class="lbl">Baris · bcp_diagram</div></div>
-      <div class="stat" id="stat-base-card"><div class="num" id="stat-base">0</div><div class="lbl">Baris · Site Down List (base)</div></div>
+      <div class="stat" id="stat-base-card"><div class="num" id="stat-base">0</div><div class="lbl">Baris · Site Down List (POT, base)</div></div>
       <div class="stat" id="stat-output-card"><div class="num" id="stat-output">0</div><div class="lbl">Baris · Output</div></div>
       <div class="stat dup-info"><div class="num" id="stat-dup">0</div><div class="lbl">Duplikat (dipertahankan)</div></div>
     </div>
@@ -216,14 +210,16 @@
     <div class="integrity-note" id="integrity-note">🛡️ <b>Data integrity:</b> memverifikasi jumlah baris...</div>
     <div class="dup-note" id="dup-note">🔁 <b>Duplikat:</b> menghitung...</div>
     <div class="flow-note" id="flow-note">
-      🧭 <b>Alur:</b> setiap baris <code>Site Down List</code> → 1 baris output · kolom tertentu diambil langsung dari Site Down List · kolom lain diperkaya dari Segmentation Info & POT detail.
+      🧭 <b>Alur:</b> setiap baris <code>Site Down List</code> (dari POT) → 1 baris output · kolom 8 terpilih strict dari Site Down List · kolom lain <b>diutamakan dari POT Detail</b>, lalu Segmentation hanya mengisi gap.
     </div>
     <div class="key-note" id="key-note">🔑 <b>Key:</b> sedang menentukan sumber...</div>
     <div class="alias-note">
-      🔗 <b>Cross-map & alias aktif:</b><br>
-      🔀 <code>First Occurred(NT)</code> ← <code>Last Occurred(NT)</code> di <b>Site Down List</b><br>
-      🟢 <code>Key</code>, <code>Alarm</code>, <code>Site Id</code>, <code>BTS Name</code>, <code>Hub Type</code>, <code>Power Alarm Name</code>, <code>Power Alarm Time</code> ← hanya dari <b>Site Down List</b><br>
-      🔵 Kolom lain (Old Site Id, System, Tech, IP OAM, Last Occurred(NT), Alarm Identifier, TT, WO, Mains Failure, dll) ← dari Segmentation Info & POT detail<br>
+      🔗 <b>Prioritas sumber data:</b><br>
+      🥇 <b>POT Analysis Report = DATA UTAMA</b> — Summary Report → bcp_diagram · Site Down List → base baris + kolom strict · Detail POT → kolom pengayaan utama<br>
+      🥈 <b>Segmentation Info = PELENGKAP</b> — hanya mengisi kolom yang <b>tidak ada di POT</b> atau <b>selnya kosong di POT</b><br>
+      🔀 <code>First Occurred(NT)</code> ← <code>Last Occurred(NT)</code> di <b>Site Down List</b> (cross-map)<br>
+      🟢 <code>Key</code>, <code>Alarm</code>, <code>Site Id</code>, <code>BTS Name</code>, <code>Hub Type</code>, <code>Power Alarm Name</code>, <code>Power Alarm Time</code> ← strict dari <b>Site Down List</b> (no fallback)<br>
+      🟠 Kolom lain (Old Site Id, System, Tech, IP OAM, Last Occurred(NT), Alarm Identifier, TT, WO, Mains Failure, dll) ← <b>POT Detail dulu</b>, baru Segmentation jika POT kosong<br>
       📝 Alias: <code>Site Id</code> ↔ <code>Site ID</code>
     </div>
 
@@ -231,7 +227,7 @@
       <summary>🔗 Column Mapping (klik untuk lihat detail)</summary>
       <div class="panel-body">
         <table class="mapping-table">
-          <thead><tr><th>Kolom Template</th><th>Kolom Asli</th><th>Sumber</th><th>Status</th></tr></thead>
+          <thead><tr><th>Kolom Template</th><th>Kolom Asli</th><th>Sumber</th><th>Fallback</th><th>Status</th></tr></thead>
           <tbody id="mapping-body"></tbody>
         </table>
       </div>
@@ -247,7 +243,7 @@
       </div>
     </details>
 
-    <div class="warn-note">💡 Jika ada kolom kosong, cek mapping table & debug log — bisa jadi nama kolom sumber tidak terdeteksi.</div>
+    <div class="warn-note">💡 Jika ada kolom kosong, cek mapping table & debug log — bisa jadi nama kolom sumber tidak terdeteksi di POT maupun Segmentation.</div>
   </div>
 </div>
 
@@ -543,7 +539,7 @@ async function process() {
   if (processing || !potFile || !segFile) return;
   processing = true;
   logLines.length = 0;
-  log('=== Mulai proses kompilasi ===');
+  log('=== Mulai proses kompilasi (POT = data utama, Seg = pelengkap) ===');
 
   const btn = document.getElementById('btn-process');
   btn.textContent = '⏳ Memproses...';
@@ -564,7 +560,7 @@ async function process() {
     /* ---- 1. Read POT ---- */
     startStage('stage-pot');
     await sleep(350);
-    log('Membaca file POT: ' + potFile.name);
+    log('Membaca file POT (data utama): ' + potFile.name);
     const potBuf = await potFile.arrayBuffer();
     const potWb = XLSX.read(potBuf, { type: 'array', cellDates: true });
     log('Sheet di POT: ' + potWb.SheetNames.join(', '));
@@ -577,10 +573,10 @@ async function process() {
     doneStage('stage-pot', summaryRows.length + ' baris · sheet "' + summarySheetName + '"');
     await sleep(250);
 
-    /* ---- 2. Read Segmentation ---- */
+    /* ---- 2. Read Segmentation (pelengkap) ---- */
     startStage('stage-seg');
     await sleep(350);
-    log('Membaca file Segmentation: ' + segFile.name);
+    log('Membaca file Segmentation (pelengkap): ' + segFile.name);
     const segBuf = await segFile.arrayBuffer();
     const segWb = XLSX.read(segBuf, { type: 'array', cellDates: true });
     log('Sheet di Segmentation: ' + segWb.SheetNames.join(', '));
@@ -592,11 +588,11 @@ async function process() {
     doneStage('stage-seg', segRowsRaw.length + ' baris · sheet "' + segSheetName + '"');
     await sleep(250);
 
-    /* ---- 3. Base = Site Down List + Build Lookup ---- */
+    /* ---- 3. Base = Site Down List (dari POT) + Build Lookup ---- */
     startStage('stage-match');
     await sleep(300);
 
-    // 3a. Cari sheet "Site Down List"
+    // 3a. Cari sheet "Site Down List" di POT
     let siteDownListName = null, siteDownListRows = null;
     for (const n of potWb.SheetNames) {
       if (norm(n).includes('sitedown')) { siteDownListName = n; siteDownListRows = sheetToAOA(potWb, n); break; }
@@ -611,7 +607,7 @@ async function process() {
     if (!siteDownListRows || siteDownListRows.length < 2) {
       throw new Error('Sheet "Site Down List" tidak ditemukan / kosong di POT Analysis Report');
     }
-    log('Site Down List: sheet "' + siteDownListName + '" · ' + siteDownListRows.length + ' baris total');
+    log('Site Down List (POT): sheet "' + siteDownListName + '" · ' + siteDownListRows.length + ' baris total');
 
     // 3b. Deteksi header Site Down List
     let sdlHeaderIdx = findHeaderRowByColumns(siteDownListRows, [
@@ -689,7 +685,7 @@ async function process() {
     }
     log('Duplikat (info): ' + dupGroups + ' grup · ' + dupRowsTotal + ' baris · ' + dupExtra + ' baris ekstra — SEMUA dipertahankan');
 
-    // 3d. Detail POT (untuk alarm sisa)
+    // 3d. Detail POT (untuk pengayaan utama)
     let potDetailName = null, potDetailRows = null;
     for (const n of potWb.SheetNames) {
       if (n === summarySheetName || n === siteDownListName) continue;
@@ -699,7 +695,7 @@ async function process() {
         potDetailName = n; potDetailRows = rows; break;
       }
     }
-    log('POT detail: ' + (potDetailName ? 'sheet "' + potDetailName + '"' : 'TIDAK ADA'));
+    log('POT detail (utama): ' + (potDetailName ? 'sheet "' + potDetailName + '"' : 'TIDAK ADA'));
 
     // 3e. Data Segmentation & POT detail
     const segHeaderIdx = findHeaderRowByColumns(segRowsRaw, [
@@ -721,7 +717,7 @@ async function process() {
         if (!sid) continue;
         if (!(sid in segLookup)) segLookup[sid] = r;
       }
-      log('Seg lookup: ' + Object.keys(segLookup).length + ' site unik');
+      log('Seg lookup (pelengkap): ' + Object.keys(segLookup).length + ' site unik');
     }
 
     // 3g. Lookup potLookup (semua baris per site)
@@ -734,13 +730,14 @@ async function process() {
         if (!sid) continue;
         (potLookup[sid] = potLookup[sid] || []).push(r);
       }
-      log('POT detail lookup: ' + Object.keys(potLookup).length + ' site unik');
+      log('POT detail lookup (utama): ' + Object.keys(potLookup).length + ' site unik');
     }
 
-    // 3h. Build mapping
+    // 3h. Build mapping - POT = UTAMA, Seg = PELENGKAP
     const segMap = {}, potMap = {};
     mappingRows = [];
     for (const tc of SEG_COLS) {
+      // Priority 1: SDL_SOURCE_MAP (strict)
       if (SDL_SOURCE_MAP[tc] !== undefined) {
         if (sdlMap[tc] !== undefined) {
           const isCross = tc === 'First Occurred(NT)';
@@ -749,27 +746,56 @@ async function process() {
             source: isCross ? 'POT Site Down List (cross-map)' : 'POT Site Down List',
             matched: sdlMapLabels[tc],
             ok: true,
-            cls: isCross ? 'tr-cross' : 'tr-sdl'
+            cls: isCross ? 'tr-cross' : 'tr-sdl',
+            fallback: '—'
           });
         } else {
-          mappingRows.push({ template: tc, source: 'POT Site Down List (not found)', matched: '—', ok: false, cls: '' });
+          mappingRows.push({ template: tc, source: 'POT Site Down List (not found)', matched: '—', ok: false, cls: '', fallback: '—' });
         }
         continue;
       }
-      const fromSeg = autoMatch(tc, segHeader);
+
+      // Priority 2: POT Detail (utama)
+      // Priority 3: Segmentation (pelengkap / fallback)
       const fromPot = autoMatch(tc, potHeader);
-      const isAlarm = /first|last|occurred|alarm|tt|wo/i.test(tc);
-      if (isAlarm && fromPot) {
-        potMap[tc] = fromPot;
-        mappingRows.push({ template: tc, source: 'POT Detail', matched: fromPot, ok: true, cls: 'tr-pot' });
-      } else if (fromSeg) {
-        segMap[tc] = fromSeg;
-        mappingRows.push({ template: tc, source: 'Segmentation Info', matched: fromSeg, ok: true, cls: 'tr-seg' });
+      const fromSeg = autoMatch(tc, segHeader);
+
+      if (fromPot) potMap[tc] = fromPot;
+      if (fromSeg) segMap[tc] = fromSeg;
+
+      if (fromPot && fromSeg) {
+        mappingRows.push({
+          template: tc,
+          source: 'POT Detail (utama)',
+          matched: fromPot,
+          ok: true,
+          cls: 'tr-pot',
+          fallback: 'Seg: ' + fromSeg
+        });
+        log('  Map: "' + tc + '" ← POT Detail "' + fromPot + '" (fallback Seg: "' + fromSeg + '")');
       } else if (fromPot) {
-        potMap[tc] = fromPot;
-        mappingRows.push({ template: tc, source: 'POT Detail', matched: fromPot, ok: true, cls: 'tr-pot' });
+        mappingRows.push({
+          template: tc,
+          source: 'POT Detail (utama)',
+          matched: fromPot,
+          ok: true,
+          cls: 'tr-pot',
+          fallback: '—'
+        });
+        log('  Map: "' + tc + '" ← POT Detail "' + fromPot + '"');
+      } else if (fromSeg) {
+        mappingRows.push({
+          template: tc,
+          source: 'Segmentation (pelengkap)',
+          matched: fromSeg,
+          ok: true,
+          cls: 'tr-seg',
+          fallback: '—'
+        });
+        log('  Map: "' + tc + '" ← Segmentation (pelengkap) "' + fromSeg + '"');
       } else {
-        mappingRows.push({ template: tc, source: '—', matched: '—', ok: false, cls: '' });
+        mappingRows.push({ template: tc, source: '—', matched: '—', ok: false, cls: '', fallback: '—' });
+        log('  Map: "' + tc + '" ← TIDAK DITEMUKAN di POT Detail maupun Segmentation');
       }
     }
     const totalMatched = mappingRows.filter(m => m.ok).length;
@@ -788,6 +814,7 @@ async function process() {
 
     const segOutRows = [SEG_COLS.slice()];
     let segHitCount = 0, potHitCount = 0, keyFilledCount = 0;
+    let potPrimaryCells = 0, segFallbackCells = 0;
 
     for (let i = 0; i < sdlData.length; i++) {
       // Yield ke UI setiap 500 baris (progress)
@@ -808,7 +835,7 @@ async function process() {
       for (const tc of SEG_COLS) {
         let val = '';
 
-        // Priority 1: SDL_SOURCE_MAP (STRICT, no fallback)
+        // ===== PRIORITY 1: SDL (STRICT, tanpa fallback) =====
         if (SDL_SOURCE_MAP[tc] !== undefined) {
           if (sdlMap[tc] !== undefined) {
             if (tc === 'Key') {
@@ -820,13 +847,12 @@ async function process() {
               val = sdlRow[sdlMap[tc]] ?? '';
             }
           }
+          out.push(val);
+          continue;
         }
-        // Priority 2: Segmentation Info
-        else if (segMap[tc] !== undefined && segRow) {
-          val = segRow[segHeader.indexOf(segMap[tc])] ?? '';
-        }
-        // Priority 3: POT detail dengan agregasi
-        else if (potMap[tc] !== undefined && potMatches.length) {
+
+        // ===== PRIORITY 2: POT Detail (UTAMA) =====
+        if (potMap[tc] !== undefined && potMatches.length) {
           const pi = potHeader.indexOf(potMap[tc]);
           if (/first.*occurred/i.test(tc)) {
             let best = null, bestDate = null;
@@ -845,9 +871,26 @@ async function process() {
             }
             val = best ?? potMatches[0][pi] ?? '';
           } else {
-            val = potMatches[0][pi] ?? '';
+            // Ambil baris pertama yang punya nilai (non-empty)
+            for (const m of potMatches) {
+              const v = m[pi];
+              if (v !== '' && v != null) { val = v; break; }
+            }
+            if (val === '' || val == null) val = potMatches[0][pi] ?? '';
+          }
+          if (val !== '' && val != null) potPrimaryCells++;
+        }
+
+        // ===== PRIORITY 3: Segmentation (PELENGKAP - isi gap saja) =====
+        if ((val === '' || val == null) && segMap[tc] !== undefined && segRow) {
+          const si = segHeader.indexOf(segMap[tc]);
+          const segVal = segRow[si] ?? '';
+          if (segVal !== '' && segVal != null) {
+            val = segVal;
+            segFallbackCells++;
           }
         }
+
         out.push(val);
       }
       segOutRows.push(out);
@@ -855,13 +898,18 @@ async function process() {
 
     const outputRowCount = segOutRows.length - 1;
     const enrichRate = sdlData.length ? Math.round((segHitCount / sdlData.length) * 100) : 0;
+    const potCoverage = sdlData.length ? Math.round((potHitCount / sdlData.length) * 100) : 0;
 
     let buildDetail = outputRowCount + ' baris output';
     if (dupGroups > 0) buildDetail += ' (termasuk ' + dupRowsTotal + ' duplikat)';
-    buildDetail += ' · Key: ' + keyFilledCount;
-    buildDetail += ' · Seg: ' + segHitCount + '/' + sdlData.length;
+    buildDetail += ' · POT: ' + potHitCount + '/' + sdlData.length;
+    buildDetail += ' · Seg fill: ' + segFallbackCells + ' sel';
     doneStage('stage-build', buildDetail);
-    log('Output bcp_segmentation: ' + outputRowCount + ' baris · Key: ' + keyFilledCount + ' · Seg match: ' + segHitCount + ' · POT: ' + potHitCount);
+    log('Output bcp_segmentation: ' + outputRowCount + ' baris');
+    log('  - POT Detail coverage: ' + potHitCount + '/' + sdlData.length + ' (' + potCoverage + '%)');
+    log('  - Sel diisi dari POT Detail: ' + potPrimaryCells);
+    log('  - Sel diisi dari Seg (fallback): ' + segFallbackCells);
+    log('  - Key terisi: ' + keyFilledCount);
     await sleep(250);
 
     /* ---- 5. Summary Report → bcp_diagram ---- */
@@ -939,9 +987,10 @@ async function process() {
     }
 
     document.getElementById('flow-note').innerHTML =
-      '🧭 <b>Alur:</b> ' + sdlData.length + ' baris dari <code>' + escapeHtml(siteDownListName) + '</code> → ' +
-      segHitCount + ' site diperkaya dari Segmentation (' + enrichRate + '%) · ' +
-      potHitCount + ' site punya detail POT.';
+      '🧭 <b>Alur (POT = utama, Seg = pelengkap):</b> ' + sdlData.length + ' baris dari <code>' + escapeHtml(siteDownListName) + '</code> (POT) → ' +
+      potHitCount + ' site diperkaya dari POT Detail (' + potCoverage + '%) · ' +
+      segHitCount + ' site punya data Segmentation (' + enrichRate + '%) · ' +
+      segFallbackCells + ' sel diisi dari Seg karena POT kosong/tidak ada.';
 
     let keyNoteHtml = '🔑 <b>Key:</b> kolom <code>' + escapeHtml(sdlKeyCol) + '</code> dari <code>' + escapeHtml(siteDownListName) + '</code> · ' +
       keyFilledCount + '/' + sdlData.length + ' baris terisi';
@@ -957,7 +1006,7 @@ async function process() {
     document.getElementById('result-card').scrollIntoView({ behavior: 'smooth' });
 
     if (isIntegrityOk) {
-      toast('✅ Berhasil! ' + outputRowCount + ' baris = ' + sdlData.length + ' base (termasuk ' + dupRowsTotal + ' duplikat).', 'success');
+      toast('✅ Berhasil! ' + outputRowCount + ' baris = ' + sdlData.length + ' base (POT utama, Seg pelengkap).', 'success');
     } else {
       toast('⚠️ Selesai, ada selisih baris. Cek integrity note.', 'warn');
     }
@@ -991,6 +1040,7 @@ function renderMappingTable() {
     html += `<td>${escapeHtml(m.template)}</td>`;
     html += `<td class="source">${escapeHtml(m.matched)}</td>`;
     html += `<td>${escapeHtml(m.source)}</td>`;
+    html += `<td class="source">${escapeHtml(m.fallback || '—')}</td>`;
     html += `<td class="${statusCls}">${statusTxt}</td>`;
     html += '</tr>';
   }
@@ -1068,7 +1118,7 @@ function resetAll() {
 ============================================================ */
 bindDrop('dz-pot', 'file-pot', 'pot');
 bindDrop('dz-seg', 'file-seg', 'seg');
-log('Aplikasi siap. Menunggu upload file...');
+log('Aplikasi siap. Menunggu upload file... (POT = data utama, Seg = pelengkap)');
 </script>
 </body>
 </html>
